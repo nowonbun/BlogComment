@@ -27,7 +27,11 @@ abstract class AbstractDao {
 		$this->mysqli->close ();
 	}
 	public function validateIdx($val){
-		$this->validate($val);
+		if($val == null){
+			header ( "HTTP/1.1 401 Unauthorized"  );
+			http_response_code ( 401 );
+			die ();
+		}
 		if($val < 1){
 			header ( "HTTP/1.1 401 Unauthorized"  );
 			http_response_code ( 401 );
@@ -35,7 +39,11 @@ abstract class AbstractDao {
 		}
 	}
 	public function validateUrl($val){
-		$this->validate($val);
+		if($val == null || trim($val) == ""){
+			header ( "HTTP/1.1 401 Unauthorized"  );
+			http_response_code ( 401 );
+			die ();
+		}
 		if(preg_match("/".$this->host."/i", $val) == 0){
 			header ( "HTTP/1.1 401 Unauthorized"  );
 			http_response_code ( 401 );
@@ -43,7 +51,7 @@ abstract class AbstractDao {
 		}
 	}
 	public function validate($val){
-		if($val == null){
+		if($val == null || trim($val) == ""){
 			header ( "HTTP/1.1 401 Unauthorized"  );
 			http_response_code ( 401 );
 			die ();
