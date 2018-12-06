@@ -86,6 +86,9 @@ class Comment{
 	private $lastupdated;
 	private $comment;
 	private $child;
+	private $ip;
+	private $deleted;
+	private $url;
 	
 	public function setIdx($idx){
 		$this->idx = $idx;
@@ -135,5 +138,23 @@ class Comment{
 	public function getChild(){
 		return $this->child;
 	}
+	public function setIp($ip){
+		return $this->ip = $ip;
+	}
+	public function getIp(){
+		return $this->ip;
+	}
+	public function setDeleted($deleted){
+		$this->deleted = $deleted;
+	}
+	public function isDeleted(){
+		return $this->deleted;
+	}
+	public function setUrl($url){
+		$this->url = $url;
+	}
+	public function getUrl(){
+		return $this->url;
+	}		
 }
 ?>

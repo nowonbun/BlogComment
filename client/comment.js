@@ -53,7 +53,7 @@ function onLoad() {
 }
 function commentAjax(url,data,reload,cb){
 	$.ajax({
-		url: "http://nowonbun.woobi.co.kr"+url,
+		url: "http://localhost:8081"+url,
 		type: "POST",
 		dataType: "json",
 		data: data,

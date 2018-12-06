@@ -17,6 +17,9 @@ class Controller extends AbstractDao{
 			parent::validate($id);
 			parent::validate($email);
 			parent::validate($comment);
+			$comment = str_replace("\r\n", " ", $comment);
+			$comment = str_replace("\r", " ", $comment);
+			$comment = str_replace("\n", " ", $comment);
 			$stmt = parent::getStmt ( "INSERT INTO COMMENT_T (URL, IP ,ID, EMAIL, COMMENT, PARENT, CREATEDDATE, LASTUPDATED) VALUES (?, ?, ?, ?, ?, ?, now(), now())" );
 			$stmt->bind_param ( "sssssi", $url, $ip, $id, $email, base64_encode  ($comment), $parent);
 			if ($stmt->execute ()) {

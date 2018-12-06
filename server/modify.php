@@ -15,6 +15,9 @@ class Controller extends AbstractDao{
 			parent::validate($id);
 			parent::validate($email);
 			parent::validate($comment);
+			$comment = str_replace("\r\n", " ", $comment);
+			$comment = str_replace("\r", " ", $comment);
+			$comment = str_replace("\n", " ", $comment);
 			$stmt = null;
 			if(parent::isSuperUser($id, $email)){
 				$stmt = parent::getStmt ( "INSERT INTO COMMENT_H (oIDX,URL,ID,IP,EMAIL,COMMENT,PARENT,ISDELETED,CREATEDDATE,LASTUPDATED,HISTORYDATE) 
@@ -31,7 +34,7 @@ class Controller extends AbstractDao{
 				parent::close();
 			} else {
 				parent::close();
-				return "NG";
+				return array ("result" => "NG");
 			}
 			$stmt = null;
 			if(parent::isSuperUser($id, $email)){
