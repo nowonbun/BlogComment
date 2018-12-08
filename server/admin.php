@@ -8,20 +8,15 @@ class Controller extends AbstractDao{
 	private $sup = "xx";
 	private $pid;
 	private $pwd;
+	private $type;
 	private $error;
 	private $login = false;
 	private $ajax = false;
 	protected function run(){
 		$this->pid = $_POST["pid"];
 		$this->pwd = $_POST["pwd"];
-		if(strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'POST'){
-			if(($this->pid == $this->sui && $this->pwd == $this->sup) || $_SESSION["LOGIN"]){
-				$_SESSION["LOGIN"] = true;
-				$this->login = true;
-			} else {
-				$this->error = "아이디, 패스워드를 확인해 주세요.";
-			}
-		} else if (strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'SELECT' && $_SESSION["LOGIN"]){
+		$this->type = $_REQUEST["type"];
+		if ($this->type == "SELECT" && strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'POST' && $_SESSION["LOGIN"]){
 			$this->ajax = true;
 			$stmt = parent::getStmt ( "SELECT IDX, URL, ID, IP, EMAIL, COMMENT, PARENT, ISDELETED, CREATEDDATE, LASTUPDATED from COMMENT_T ORDER BY IDX DESC" );
 			$stmt->execute ();
@@ -51,7 +46,7 @@ class Controller extends AbstractDao{
 				}
 			}
 			return array ( "data" => $list);
-		} else if (strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'MODIFY' && $_SESSION["LOGIN"]){
+		} else if ($this->type == "MODIFY" && strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'POST' && $_SESSION["LOGIN"]){
 			$idx = (int)trim($_REQUEST["idx"]);
 			$comment = $_REQUEST["comment"];
 			parent::validateIdx($idx);
@@ -81,7 +76,7 @@ class Controller extends AbstractDao{
 				parent::close();
 				return array ("result" => "NG");
 			}
-		} else if (strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'DELETE' && $_SESSION["LOGIN"]){
+		} else if ($this->type == "DELETE" && strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'POST' && $_SESSION["LOGIN"]){
 			$idx = (int)trim($_REQUEST["idx"]);
 			parent::validateIdx($idx);
 			$stmt = null;
@@ -94,7 +89,7 @@ class Controller extends AbstractDao{
 				parent::close();
 				return array ("result" => "NG");
 			}
-		} else if (strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'ACTIVE' && $_SESSION["LOGIN"]){
+		} else if ($this->type == "ACTIVE" && strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'POST' && $_SESSION["LOGIN"]){
 			$idx = (int)trim($_REQUEST["idx"]);
 			parent::validateIdx($idx);
 			$stmt = null;
@@ -106,6 +101,13 @@ class Controller extends AbstractDao{
 			} else {
 				parent::close();
 				return array ("result" => "NG");
+			}
+		} else if(strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == 'POST'){
+			if(($this->pid == $this->sui && $this->pwd == $this->sup) || $_SESSION["LOGIN"]){
+				$_SESSION["LOGIN"] = true;
+				$this->login = true;
+			} else {
+				$this->error = "아이디, 패스워드를 확인해 주세요.";
 			}
 		} else {
 			$_SESSION["LOGIN"] = null;
@@ -176,7 +178,7 @@ if(trim($data) == "null"){
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet">
 	<style>
 		.custom-table td{
-			white-space: nowrap;
+			white-space: normal;
 		}
 		.custom-table td, .custom-table th, .custom-table textarea {
 			padding:5px;
@@ -321,10 +323,10 @@ if(trim($data) == "null"){
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/jquery.dataTables.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/dataTables.bootstrap4.min.js"></script>
 	<script>
-		function commentAjax(type,data,cb){
+		function commentAjax(data,cb){
 			$.ajax({
 				url: location.origin + location.pathname+"?"+data,
-				type: type,
+				type: "POST",
 				dataType: "json",
 				success: function (data, textStatus, jqXHR) {
 					cb.call(this, data);
@@ -361,8 +363,8 @@ if(trim($data) == "null"){
 		$(document).ready(function() {
 			var table = $('#dataTable').DataTable({
 				ajax : {
-					url : "admin.php",
-					type : "SELECT",
+					url : "admin.php?type=SELECT",
+					type : "POST",
 					complete : function() {
 						var $info = $(".custom-table-wrapper div.row:nth-child(3) .dataTables_info");
 						var text = $info.text();
@@ -404,8 +406,8 @@ if(trim($data) == "null"){
 			$(document).on("click",".delete-link", function(){
 				$parent = $(this).parent();
 				var tr = $(this).parent().parent();
-				var data = "idx="+tr.find(".idx").text();
-				commentAjax("DELETE", data, function(){
+				var data = "idx="+tr.find(".idx").text()+"&type=DELETE";
+				commentAjax(data, function(){
 					toastr.success("삭제되었습니다.");
 					$parent.html("");
 					$parent.append($("<a href='javascript:void(0);' class='active-link'>활성</a>"));
@@ -414,8 +416,8 @@ if(trim($data) == "null"){
 			$(document).on("click",".active-link", function(){
 				$parent = $(this).parent();
 				var tr = $(this).parent().parent();
-				var data = "idx="+tr.find(".idx").text();
-				commentAjax("ACTIVE", data, function(){
+				var data = "idx="+tr.find(".idx").text()+"&type=ACTIVE";
+				commentAjax(data, function(){
 					toastr.success("활성되었습니다.");
 					$parent.html("");
 					$parent.append($("<a href='javascript:void(0);' class='delete-link'>삭제</a>"));
@@ -424,8 +426,9 @@ if(trim($data) == "null"){
 			$(document).on("click",".modify-link", function(){
 				var tr = $(this).parent().parent();
 				var data = "idx="+tr.find(".idx").text() + "&" +
-						   "comment="+tr.find("textarea").val();
-				commentAjax("MODIFY", data, function(){
+						   "comment="+tr.find("textarea").val() + "&" +
+						   "type=MODIFY";
+				commentAjax(data, function(){
 					toastr.success("수정되었습니다.");
 				});
 			});
